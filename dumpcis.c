@@ -8,7 +8,7 @@ int main()
     pcm_handle_t pcm;
 
     printf("DUMPCIS- Dump Card\n");
-    irr = pcm_read(pcm, 0x00);
+    irr = pcm_read(pcm, 0, 0x00);
     printf("IIR: %X\n", irr);
 
     return 0;
