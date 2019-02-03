@@ -39,12 +39,17 @@ pcm_handle_t * pcm_find_next(pcm_handle_t * pcm)
 
 bool pcm_find_done(pcm_handle_t * pcm)
 {
-    return (pcm->id >= 3);
+    return !(pcm->id >= 3);
 }
 
 bool pcm_valid(pcm_handle_t * pcm)
 {
     return pcm->valid;
+}
+
+uint16_t pcm_ioaddr(pcm_handle_t * pcm)
+{
+    return pcm->io_base;
 }
 
 uint8_t pcm_read_data(pcm_handle_t * pcm)

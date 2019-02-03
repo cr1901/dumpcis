@@ -16,6 +16,9 @@ pcm_handle_t * pcm_find_init(pcm_handle_t * pcm);
 pcm_handle_t * pcm_find_next(pcm_handle_t * pcm);
 bool pcm_find_done(pcm_handle_t * pcm);
 
+bool pcm_valid(pcm_handle_t * pcm);
+uint16_t pcm_ioaddr(pcm_handle_t * pcm);
+
 uint8_t pcm_read_data(pcm_handle_t * pcm);
 void pcm_write_data(pcm_handle_t * pcm, uint8_t data);
 
