@@ -4,10 +4,15 @@ CFLAGS=-0 -bt=dos -m$(MODELCHR) -I. -q -s -oh -os
 LD=wlink
 LDFLAGS=system dos option quiet
 
-dumpcis.exe: dumpcis.obj
-	$(LD) $(LDFLAGS) file $<
+OBJECTS=dumpcis.obj pcmctrl.obj
+
+dumpcis.exe: $(OBJECTS)
+	$(LD) $(LDFLAGS) file { $(OBJECTS) }
 
 dumpcis.obj: dumpcis.c
+	$(CC) $(CFLAGS) $<
+
+pcmctrl.obj: pcmctrl.c
 	$(CC) $(CFLAGS) $<
 
 xfer:
