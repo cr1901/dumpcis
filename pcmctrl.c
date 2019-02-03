@@ -3,7 +3,7 @@
 #include <conio.h>
 #include "pcmctrl.h"
 
-#define SOCK_ADDR(_s, _a) ((_s > 0) ? 0x00 : 0x40) + _a
+#define SOCK_ADDR(_s, _a) ((_s == 0) ? 0x00 : 0x40) + _a
 
 uint16_t io_bases[3] = {0x3E0, 0x3E2, 0x279};
 
