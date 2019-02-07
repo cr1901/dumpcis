@@ -7,7 +7,7 @@ int main()
     pcm_handle_t pcmo, * pcm;
     int socket;
 
-    printf("DUMPCIS- Dump Card\n");
+    printf("DUMPCIS- Dump PCMCIA Card Information Structure\n");
 
     for(pcm = pcm_find_init(&pcmo); pcm_find_done(pcm); pcm = pcm_find_next(pcm))
     {

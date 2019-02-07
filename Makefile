@@ -9,10 +9,7 @@ OBJECTS=dumpcis.obj pcmctrl.obj
 dumpcis.exe: $(OBJECTS)
 	$(LD) $(LDFLAGS) file { $(OBJECTS) }
 
-dumpcis.obj: dumpcis.c
-	$(CC) $(CFLAGS) $<
-
-pcmctrl.obj: pcmctrl.c
+%.obj: %.c
 	$(CC) $(CFLAGS) $<
 
 xfer:
