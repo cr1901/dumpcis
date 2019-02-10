@@ -84,7 +84,7 @@ void pcm_write(pcm_handle_t * pcm, uint8_t socket, uint8_t addr, uint8_t data)
 
 #define MK_ISA(_h, _l) (((uint32_t) (_h & 0x0FuL) << 20) | (_l << 12))
 #define MK_OFFSET(_h, _l) (((uint32_t) (_h & 0x3FuL) << 20) | (_l << 12))
-// Normalized Far Pointer
+/* Normalized Far Pointer */
 #define LIN_TO_FP(_a) MK_FP((_a & 0x0FFFFFuL) >> 4, (_a & 0x0FuL))
 #define WIN_OFFS(_w) (_w << 3)
 void pcm_get_window(pcm_handle_t * pcm, uint8_t socket, uint8_t win_num, \
@@ -113,7 +113,6 @@ void pcm_get_window(pcm_handle_t * pcm, uint8_t socket, uint8_t win_num, \
     w_info->isa_win = LIN_TO_FP(full_addr_start);
 }
 
-
 #define FP_TO_LIN(_a) (((uint32_t) FP_SEG(_a) << 4) + FP_OFF(_a))
 #define PCM_OFFSET(_isa, _pcm) ((_pcm - _isa) % PCM_ADDR_SIZE)
 void pcm_map_window(pcm_handle_t * pcm, uint8_t socket, uint8_t win_num, \
@@ -126,21 +125,21 @@ void pcm_map_window(pcm_handle_t * pcm, uint8_t socket, uint8_t win_num, \
     isa_lin = FP_TO_LIN(w_info->isa_win);
     offset = PCM_OFFSET(isa_lin, w_info->pcm_start);
 
-    // Only modify the bits that influence the window for each register.
-    // System Start
+    /* Only modify the bits that influence the window for each register.
+       System Start */
     pcm_write(pcm, socket, 0x10 + WIN_OFFS(win_num), isa_lin >> 12);
     tmp = pcm_read(pcm, socket, 0x11 + WIN_OFFS(win_num));
     tmp = (tmp & 0xC0) | ((isa_lin >> 20) & 0x0FuL);
     pcm_write(pcm, socket, 0x11 + WIN_OFFS(win_num), tmp);
 
-    // System Stop Address- stop address is 4kB inclusive.
+    /* System Stop Address- stop address is 4kB inclusive. */
     isa_lin += (0x1000 * (w_info->num_blocks - 1));
     pcm_write(pcm, socket, 0x12 + WIN_OFFS(win_num), isa_lin >> 12);
     tmp = pcm_read(pcm, socket, 0x13 + WIN_OFFS(win_num));
     tmp = (tmp & 0xC0) | ((isa_lin >> 20) & 0x0FuL);
     pcm_write(pcm, socket, 0x13 + WIN_OFFS(win_num), tmp);
 
-    // Offset
+    /* Offset */
     pcm_write(pcm, socket, 0x14 + WIN_OFFS(win_num), offset >> 12);
     tmp = pcm_read(pcm, socket, 0x15 + WIN_OFFS(win_num));
     tmp = (tmp & 0xC0) | ((offset >> 20) & 0x3FuL);

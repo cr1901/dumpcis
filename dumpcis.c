@@ -36,8 +36,6 @@ int main()
             pcm_window_t curr_window;
 
             uint8_t count = 0;
-            uint32_t offset = 0;
-            uint32_t tmp = 0;
 
             uint8_t isr = pcm_read(pcm, socket, 0x01);
             if((isr & 0xC))
