@@ -1,6 +1,9 @@
 #include <stdint.h>
 #include <stdbool.h>
+
 #include <conio.h>
+#include <dos.h>
+
 #include "pcmctrl.h"
 
 #define SOCK_ADDR(_s, _a) ((_s == 0) ? 0x00 : 0x40) + _a
@@ -77,4 +80,68 @@ void pcm_write(pcm_handle_t * pcm, uint8_t socket, uint8_t addr, uint8_t data)
 {
     pcm_set_addr(pcm, socket, addr);
     pcm_write_data(pcm, data);
+}
+
+#define MK_ISA(_h, _l) (((uint32_t) (_h & 0x0FuL) << 20) | (_l << 12))
+#define MK_OFFSET(_h, _l) (((uint32_t) (_h & 0x3FuL) << 20) | (_l << 12))
+// Normalized Far Pointer
+#define LIN_TO_FP(_a) MK_FP((_a & 0x0FFFFFuL) >> 4, (_a & 0x0FuL))
+void pcm_get_window(pcm_handle_t * pcm, uint8_t socket, uint8_t win_num, \
+    pcm_window_t * w_info)
+{
+    uint8_t sysmap_start_lo, sysmap_start_hi;
+    uint8_t sysmap_stop_lo, sysmap_stop_hi;
+    uint8_t offset_hi, offset_lo;
+    uint32_t full_addr_start, full_addr_stop, full_addr_offset;
+
+    sysmap_start_lo = pcm_read(pcm, socket, 0x10);
+    sysmap_start_hi = pcm_read(pcm, socket, 0x11);
+    full_addr_start = MK_ISA(sysmap_start_hi, sysmap_start_lo);
+
+    sysmap_stop_lo = pcm_read(pcm, socket, 0x12);
+    sysmap_stop_hi = pcm_read(pcm, socket, 0x13);
+    full_addr_stop = MK_ISA(sysmap_stop_hi, sysmap_stop_lo);
+
+    w_info->num_blocks = ((full_addr_stop - full_addr_start) >> 12) + 1;
+
+    offset_lo = pcm_read(pcm, socket, 0x14);
+    offset_hi = pcm_read(pcm, socket, 0x15);
+    full_addr_offset = MK_OFFSET(offset_hi, offset_lo);
+
+    w_info->pcm_start = (full_addr_offset + full_addr_start) % PCM_ADDR_SIZE;
+    w_info->isa_win = LIN_TO_FP(full_addr_start);
+}
+
+
+#define FP_TO_LIN(_a) ((FP_SEG(_a) << 4) + FP_OFF(_a))
+#define PCM_OFFSET(_isa, _pcm) ((_pcm - _isa) % PCM_ADDR_SIZE)
+void pcm_map_window(pcm_handle_t * pcm, uint8_t socket, uint8_t win_num, \
+    pcm_window_t * w_info)
+{
+    uint32_t offset;
+    uint32_t isa_lin;
+    uint8_t tmp;
+
+    isa_lin = FP_TO_LIN(w_info->isa_win);
+    offset = PCM_OFFSET(isa_lin, w_info->pcm_start);
+
+    // Only modify the bits that influence the window for each register.
+    // System Start
+    pcm_write(pcm, socket, 0x10, isa_lin >> 12);
+    tmp = pcm_read(pcm, socket, 0x11);
+    tmp = (tmp & 0xC0) | ((isa_lin >> 20) & 0x0FuL);
+    pcm_write(pcm, socket, 0x11, tmp);
+
+    // System Stop Address- stop address is 4kB inclusive.
+    isa_lin += (0x1000 * (w_info->num_blocks - 1));
+    pcm_write(pcm, socket, 0x12, isa_lin >> 12);
+    tmp = pcm_read(pcm, socket, 0x13);
+    tmp = (tmp & 0xC0) | ((isa_lin >> 20) & 0x0FuL);
+    pcm_write(pcm, socket, 0x13, tmp);
+
+    // Offset
+    pcm_write(pcm, socket, 0x14, offset >> 12);
+    tmp = pcm_read(pcm, socket, 0x15);
+    tmp = (tmp & 0xC0) | ((offset >> 20) & 0x3FuL);
+    pcm_write(pcm, socket, 0x15, tmp);
 }

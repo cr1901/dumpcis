@@ -7,8 +7,6 @@
 
 uint8_t __far * PCM_WIN = (uint8_t __far *) MK_FP(0xe000, 0000);
 #define PCM_WIN_LINEAR 0xe0000uL
-#define PCM_ADDR_SIZE 0x04000000uL
-#define PCM_OFFSET(_isa, _pcm) ((_pcm - _isa) % PCM_ADDR_SIZE)
 
 int main()
 {
