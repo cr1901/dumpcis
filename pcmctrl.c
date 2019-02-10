@@ -86,6 +86,7 @@ void pcm_write(pcm_handle_t * pcm, uint8_t socket, uint8_t addr, uint8_t data)
 #define MK_OFFSET(_h, _l) (((uint32_t) (_h & 0x3FuL) << 20) | (_l << 12))
 // Normalized Far Pointer
 #define LIN_TO_FP(_a) MK_FP((_a & 0x0FFFFFuL) >> 4, (_a & 0x0FuL))
+#define WIN_OFFS(_w) (_w << 3)
 void pcm_get_window(pcm_handle_t * pcm, uint8_t socket, uint8_t win_num, \
     pcm_window_t * w_info)
 {
@@ -94,18 +95,18 @@ void pcm_get_window(pcm_handle_t * pcm, uint8_t socket, uint8_t win_num, \
     uint8_t offset_hi, offset_lo;
     uint32_t full_addr_start, full_addr_stop, full_addr_offset;
 
-    sysmap_start_lo = pcm_read(pcm, socket, 0x10);
-    sysmap_start_hi = pcm_read(pcm, socket, 0x11);
+    sysmap_start_lo = pcm_read(pcm, socket, 0x10 + WIN_OFFS(win_num));
+    sysmap_start_hi = pcm_read(pcm, socket, 0x11 + WIN_OFFS(win_num));
     full_addr_start = MK_ISA(sysmap_start_hi, sysmap_start_lo);
 
-    sysmap_stop_lo = pcm_read(pcm, socket, 0x12);
-    sysmap_stop_hi = pcm_read(pcm, socket, 0x13);
+    sysmap_stop_lo = pcm_read(pcm, socket, 0x12 + WIN_OFFS(win_num));
+    sysmap_stop_hi = pcm_read(pcm, socket, 0x13 + WIN_OFFS(win_num));
     full_addr_stop = MK_ISA(sysmap_stop_hi, sysmap_stop_lo);
 
     w_info->num_blocks = ((full_addr_stop - full_addr_start) >> 12) + 1;
 
-    offset_lo = pcm_read(pcm, socket, 0x14);
-    offset_hi = pcm_read(pcm, socket, 0x15);
+    offset_lo = pcm_read(pcm, socket, 0x14 + WIN_OFFS(win_num));
+    offset_hi = pcm_read(pcm, socket, 0x15 + WIN_OFFS(win_num));
     full_addr_offset = MK_OFFSET(offset_hi, offset_lo);
 
     w_info->pcm_start = (full_addr_offset + full_addr_start) % PCM_ADDR_SIZE;
@@ -127,21 +128,21 @@ void pcm_map_window(pcm_handle_t * pcm, uint8_t socket, uint8_t win_num, \
 
     // Only modify the bits that influence the window for each register.
     // System Start
-    pcm_write(pcm, socket, 0x10, isa_lin >> 12);
-    tmp = pcm_read(pcm, socket, 0x11);
+    pcm_write(pcm, socket, 0x10 + WIN_OFFS(win_num), isa_lin >> 12);
+    tmp = pcm_read(pcm, socket, 0x11 + WIN_OFFS(win_num));
     tmp = (tmp & 0xC0) | ((isa_lin >> 20) & 0x0FuL);
-    pcm_write(pcm, socket, 0x11, tmp);
+    pcm_write(pcm, socket, 0x11 + WIN_OFFS(win_num), tmp);
 
     // System Stop Address- stop address is 4kB inclusive.
     isa_lin += (0x1000 * (w_info->num_blocks - 1));
-    pcm_write(pcm, socket, 0x12, isa_lin >> 12);
-    tmp = pcm_read(pcm, socket, 0x13);
+    pcm_write(pcm, socket, 0x12 + WIN_OFFS(win_num), isa_lin >> 12);
+    tmp = pcm_read(pcm, socket, 0x13 + WIN_OFFS(win_num));
     tmp = (tmp & 0xC0) | ((isa_lin >> 20) & 0x0FuL);
-    pcm_write(pcm, socket, 0x13, tmp);
+    pcm_write(pcm, socket, 0x13 + WIN_OFFS(win_num), tmp);
 
     // Offset
-    pcm_write(pcm, socket, 0x14, offset >> 12);
-    tmp = pcm_read(pcm, socket, 0x15);
+    pcm_write(pcm, socket, 0x14 + WIN_OFFS(win_num), offset >> 12);
+    tmp = pcm_read(pcm, socket, 0x15 + WIN_OFFS(win_num));
     tmp = (tmp & 0xC0) | ((offset >> 20) & 0x3FuL);
-    pcm_write(pcm, socket, 0x15, tmp);
+    pcm_write(pcm, socket, 0x15 + WIN_OFFS(win_num), tmp);
 }
