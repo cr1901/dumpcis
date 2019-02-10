@@ -113,7 +113,7 @@ void pcm_get_window(pcm_handle_t * pcm, uint8_t socket, uint8_t win_num, \
 }
 
 
-#define FP_TO_LIN(_a) ((FP_SEG(_a) << 4) + FP_OFF(_a))
+#define FP_TO_LIN(_a) (((uint32_t) FP_SEG(_a) << 4) + FP_OFF(_a))
 #define PCM_OFFSET(_isa, _pcm) ((_pcm - _isa) % PCM_ADDR_SIZE)
 void pcm_map_window(pcm_handle_t * pcm, uint8_t socket, uint8_t win_num, \
     pcm_window_t * w_info)
