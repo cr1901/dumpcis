@@ -4,6 +4,59 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/* CIS tuple data types which can be variable length. */
+typedef struct
+{
+    uint8_t space_no;
+    uint32_t addr;
+} cis_mfc_addr_t;
+
+typedef enum
+{
+    ALLOC_CHAR_STR = 0, /* Alloc space for a C string. */
+    ALLOC_CHAR_PTR, /* Alloc space for an array of char ptrs (ptrs to strings). */
+    ALLOC_MFC_ADDR,
+    ALLOC_DEV_INFO
+} cis_alloc_req_t;
+
+/* Below fields are technically variable, but are not implemented as such.
+The spec reserves variable space for future extensions, but doesn't give
+meaning to said bits.
+TODO: Parser behavior is to ignore, warn, or error by option, not just ignore. */
+typedef struct
+{
+    uint8_t exponent;
+    uint8_t mantissa;
+} cis_ext_speed_t;
+
+typedef uint8_t cis_ext_type_t;
+
+typedef struct
+{
+    uint8_t vcc_used;
+    uint8_t mwait;
+} cis_other_cond_t;
+
+typedef struct
+{
+    uint8_t type;
+    uint8_t wps;
+
+    /* FIXME: The parser/application knows ahead of time whether a 16-bit
+    PC card or CardBus is present? */
+    union
+    {
+        uint8_t space_no;
+        uint8_t speed;
+    } speed_or_space;
+
+    cis_ext_speed_t ext_speed;
+    cis_ext_type_t ext_type;
+    uint8_t size; /* Encodes in-band information about whether to ignore
+                     other entries (size == 0xFF). Use macro to convert
+                     to actual size. */
+} cis_device_info_t;
+
 
 /* Union fields are stored in order they are presented in the spec
 (Page 18 of the Metaformat Spec). */
@@ -63,15 +116,26 @@ typedef union
     struct
     {
         uint8_t num_sets;
-        struct
-        {
-            uint8_t space_no;
-            uint32_t addr;
-        } * addrs;
+        cis_mfc_addr_t (* addrs)[];
     } longlink_mfc;
 
     /* CISTPL_NO_LINK has no body. */
     /* CISTPL_NULL has no body. */
+    /* CISTPL_ALTSTR */
+    struct
+    {
+        uint8_t num_strs;
+        char * esc;
+        char * (* strs)[];
+    } altstr;
+
+    /* CISTPL_DEVICE, CISTPL_DEVICE_A, CISTPL_DEVICE_OC, CISTPL_DEVICE_OA */
+    struct
+    {
+        uint8_t num_devs;
+        cis_other_cond_t other;
+        cis_device_info_t (* devs)[];
+    } device;
 
 } cis_tuple_body_t;
 
