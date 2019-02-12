@@ -3,6 +3,7 @@
 
 #include <dos.h>
 
+#include "cisparse.h"
 #include "pcmctrl.h"
 
 uint8_t __far * PCM_WIN = (uint8_t __far *) MK_FP(0xe000, 0000);
