@@ -32,11 +32,11 @@ int main()
             /* Preserve as much previous state as we can, be as minimally
             invasive as possible. */
             uint8_t prev_power = 0, prev_adrwin = 0;
-            pcm_window_t prev_win;
+            pcm_window_t prev_win, curr_window;
 
-            pcm_window_t curr_window;
-
+            cis_parser_t parser;
             uint8_t count = 0;
+
 
             uint8_t isr = pcm_read(pcm, socket, 0x01);
             if((isr & 0xC))
@@ -68,11 +68,7 @@ int main()
             /* Enable attribute memory and read CIS. */
             pcm_write(pcm, socket, 0x06, 0x01);
 
-            for(count = 0; count < 254; count++)
-            {
-                uint8_t dat = PCM_WIN[count];
-                printf("%c", dat);
-            }
+            cis_parse(&parser, PCM_WIN);
 
             pcm_write(pcm, socket, 0x06, 0);
 

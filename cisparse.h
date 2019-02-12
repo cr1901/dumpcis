@@ -1,6 +1,7 @@
 #ifndef CISPARSE_H
 #define CISPARSE_H
 
+#include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -203,5 +204,7 @@ typedef struct
     bool (* alloc)(void ** mem_ptr, size_t size, void * user);
     void * user;
 } cis_parser_t;
+
+int cis_parse(cis_parser_t * state, uint8_t __far * start_addr);
 
 #endif
