@@ -12,6 +12,11 @@ while, I thought it would be fun. So I agreed.
 and either [GNU Make](https://www.gnu.org/software/make/) or `wmake` (provided
 with the Watcom C Compiler) to build.
 
+If using GNU Make, make sure to use a maximum of 1 job, like as follows:
+`make -j1`. Unfortunately, `wcl` writes its output to temporary files and
+it is possible that there will be a naming conflict if running in parallel;
+`wmake` chokes on GNU Make's `.NOTPARALLEL` directive.
+
 If using `wmake`, make sure to invoke `wmake` in Unix-compatibility mode, as
 follows: `wmake -u`. Only the `all` and `wmake-clean` targets are supported if
 using `wmake`.
