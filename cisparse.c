@@ -3,17 +3,27 @@
 #include "cisparse.h"
 #include "pcmctrl.h"
 
+#define CIS_TUPLE_TYPE(_b)
+
+static bool inline is_end_tuple(cis_tuple_t tuple);
+static int inline parse_body(cis_parser_t * state, cis_tuple_t * tuple, char body[], uint8_t len);
 static uint16_t inline read_entry(char buf[], uint8_t __far * start, bool use_16);
 
 int cis_parse(cis_parser_t * state, uint8_t __far * start_addr)
 {
     char buf[257] = { '\0' };
-    uint8_t byte_count, tup_count;
-    uint16_t len;
+    uint8_t tup_count;
+    cis_tuple_t curr_tuple = { 0, 0 };
 
-    for(tup_count = 0; (!(buf[0] == 0x14 || buf[0] == 0xFF) && tup_count < 255); tup_count++)
+    for(tup_count = 0; (!is_end_tuple(curr_tuple) && tup_count < 255); tup_count++)
     {
+        uint8_t byte_count;
+        uint16_t len;
+
         len = read_entry(buf, start_addr, true);
+
+        curr_tuple.type = buf[0];
+        parse_body(state, &curr_tuple, &buf[2], buf[1]);
 
         for(byte_count = 0; byte_count < len; byte_count++)
         {
@@ -27,8 +37,19 @@ int cis_parse(cis_parser_t * state, uint8_t __far * start_addr)
     return 0;
 }
 
+static bool inline is_end_tuple(cis_tuple_t tuple)
+{
+    cis_tuple_type_t type = tuple.type;
+    return (type == CISTPL_NO_LINK || type == CISTPL_END);
+}
 
-/* Returns number of chars read. */
+static int inline parse_body(cis_parser_t * state, cis_tuple_t * tuple, char body[], uint8_t len)
+{
+    return 0;
+}
+
+/* Returns number of chars read, to get body length, read buf[1]  or subtract 2
+   from return value. */
 static uint16_t inline read_entry(char buf[], uint8_t __far * start, bool use_16)
 {
     uint16_t offset_pcm = 0;
