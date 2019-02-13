@@ -33,8 +33,8 @@ static uint16_t inline read_entry(char buf[], uint8_t __far * start, bool use_16
 {
     uint16_t offset_pcm = 0;
     uint8_t incr = use_16 ? 2 : 1;
-    uint8_t len = 0;
-    uint8_t count;
+    uint16_t len = 0;
+    uint16_t count;
 
     buf[0] = *(start + offset_pcm);
     offset_pcm += incr;
