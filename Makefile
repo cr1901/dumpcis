@@ -7,10 +7,10 @@ LDFLAGS=system dos option quiet
 all: dumpcis.exe dumppreg.exe
 
 dumpcis.exe: dumpcis.obj pcmctrl.obj cisparse.obj
-	$(LD) $(LDFLAGS) file { $^ }
+	$(LD) $(LDFLAGS) file { dumpcis.obj pcmctrl.obj cisparse.obj }
 
 dumppreg.exe: dumppreg.obj pcmctrl.obj
-	$(LD) $(LDFLAGS) file { $^ }
+	$(LD) $(LDFLAGS) file { dumppreg.obj pcmctrl.obj }
 
 %.obj: %.c
 	$(CC) $(CFLAGS) -c $<
