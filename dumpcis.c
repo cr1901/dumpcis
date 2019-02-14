@@ -8,6 +8,30 @@
 
 uint8_t __far * PCM_WIN = (uint8_t __far *) MK_FP(0xe000, 0000);
 
+typedef struct
+{
+    bool ok;
+    uint8_t num_parsed;
+    uint8_t last_tup;
+} print_error_t;
+
+typedef struct
+{
+    enum
+    {
+        NO_ERROR,
+        PARSE_ERROR,
+        PRINT_ERROR
+    } err;
+
+    union
+    {
+        cis_parser_error_t parse;
+        print_error_t print;
+    } reason;
+} dumpcis_error_t;
+
+void cis_perror(dumpcis_error_t err);
 bool foreach_tuple(cis_tuple_t curr, void * user);
 bool alloc_tuple(void ** mem_ptr, size_t size, void * user);
 
@@ -15,7 +39,7 @@ int main()
 {
     pcm_handle_t pcmo, * pcm;
     int socket;
-    int app_rc = 0;
+    dumpcis_error_t app_rc = { NO_ERROR, 0 };
 
     printf("DUMPCIS- Dump PCMCIA Card Information Structure\n");
 
@@ -81,7 +105,8 @@ int main()
             parser_rc = cis_parse(&parser, PCM_WIN);
             if(parser_rc.err != PARSER_OK)
             {
-                app_rc = -1;
+                app_rc.err = PARSE_ERROR;
+                app_rc.reason.parse = parser_rc;
                 goto check_err;
             }
 
@@ -96,12 +121,65 @@ int main()
     }
 
 check_err:
-    return app_rc;
+    cis_perror(app_rc);
+    return app_rc.err;
+}
+
+void cis_perror(dumpcis_error_t err)
+{
+    if(err.err == NO_ERROR)
+    {
+        return;
+    }
+    else if(err.err == PARSE_ERROR)
+    {
+        uint16_t err_type = err.reason.parse.err;
+        if(err.reason.parse.err == PARSE_BODY_FAILED)
+        {
+            uint16_t err_subtype = err.reason.parse.reason.err;
+            if(err_subtype == UNKNOWN_TUPLE)
+            {
+                uint8_t meta = err.reason.parse.reason.meta.tuple_no;
+                printf("Error: Encountered unknown tuple type %d.\n",
+                    meta);
+            }
+            else if(err_subtype == BAD_VAR_ALLOC)
+            {
+                cis_alloc_req_t meta = err.reason.parse.reason.meta.alloc_type;
+                printf("Error: Parser could not allocate room for variable args,"
+                    " allocation type %d.\n", meta);
+            }
+            else
+            {
+                printf("Internal Error: Unknown error type %d returned by"
+                    " parse_body()!\n", err_subtype);
+            }
+        }
+        else if(err.reason.parse.err == BAD_TUPLE_ALLOC)
+        {
+            /* TODO: Last allocated tuple as union data? */
+            printf("Error: DUMPCIS could not allocate tuple list.\n");
+        }
+        else
+        {
+            printf("Internal Error: Unknown parser error type %d!\n", \
+                err.reason.parse.err);
+        }
+    }
+    else if(err.err == PRINT_ERROR)
+    {
+        printf("Error: Placeholder Print Error.\n");
+    }
+    else
+    {
+        printf("Internal Error: Unknown application error type %d!\n",
+            err.err);
+    }
 }
 
 bool foreach_tuple(cis_tuple_t curr, void * user)
 {
-    return true;
+    return false;
 }
 
 bool alloc_tuple(void ** mem_ptr, size_t size, void * user)
