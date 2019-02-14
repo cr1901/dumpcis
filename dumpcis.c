@@ -15,6 +15,7 @@ int main()
 {
     pcm_handle_t pcmo, * pcm;
     int socket;
+    int app_rc = 0;
 
     printf("DUMPCIS- Dump PCMCIA Card Information Structure\n");
 
@@ -38,6 +39,7 @@ int main()
             pcm_window_t prev_win, curr_window;
 
             cis_parser_t parser;
+            cis_parser_error_t parser_rc;
             uint8_t count = 0;
             uint8_t isr;
 
@@ -76,7 +78,12 @@ int main()
             /* Enable attribute memory and read CIS. */
             pcm_write(pcm, socket, 0x06, 0x01);
 
-            cis_parse(&parser, PCM_WIN);
+            parser_rc = cis_parse(&parser, PCM_WIN);
+            if(parser_rc.err != PARSER_OK)
+            {
+                app_rc = -1;
+                goto check_err;
+            }
 
             pcm_write(pcm, socket, 0x06, 0);
 
@@ -88,7 +95,8 @@ int main()
         }
     }
 
-    return 0;
+check_err:
+    return app_rc;
 }
 
 bool foreach_tuple(cis_tuple_t curr, void * user)

@@ -210,6 +210,40 @@ typedef struct
     /* Private interface follows. */
 } cis_parser_t;
 
-int cis_parse(cis_parser_t * state, uint8_t __far * start_addr);
+
+/* typedef enum
+{
+
+} parse_fail_reason_t; */
+
+typedef struct
+{
+    enum
+    {
+        INTERNAL_OK = 0,
+        UNKNOWN_TUPLE,
+        BAD_VAR_ALLOC
+    } err;
+
+    union
+    {
+        uint8_t tuple_no;
+        cis_alloc_req_t alloc_type;
+    } meta;
+} cis_internal_error_t;
+
+typedef struct
+{
+    enum
+    {
+        PARSER_OK = 0,
+        PARSE_BODY_FAILED,
+        BAD_TUPLE_ALLOC
+    } err;
+
+    cis_internal_error_t reason;
+} cis_parser_error_t;
+
+cis_parser_error_t cis_parse(cis_parser_t * state, uint8_t __far * start_addr);
 
 #endif
