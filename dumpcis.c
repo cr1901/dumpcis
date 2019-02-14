@@ -133,19 +133,19 @@ void cis_perror(dumpcis_error_t err)
     }
     else if(err.err == PARSE_ERROR)
     {
-        uint16_t err_type = err.reason.parse.err;
-        if(err.reason.parse.err == PARSE_BODY_FAILED)
+        cis_parser_error_t p_err = err.reason.parse;
+        if(p_err.err == PARSE_BODY_FAILED)
         {
-            uint16_t err_subtype = err.reason.parse.reason.err;
+            uint16_t err_subtype = p_err.reason.err;
             if(err_subtype == UNKNOWN_TUPLE)
             {
-                uint8_t meta = err.reason.parse.reason.meta.tuple_no;
+                uint8_t meta = p_err.reason.meta.tuple_no;
                 printf("Error: Encountered unknown tuple type %d.\n",
                     meta);
             }
             else if(err_subtype == BAD_VAR_ALLOC)
             {
-                cis_alloc_req_t meta = err.reason.parse.reason.meta.alloc_type;
+                cis_alloc_req_t meta = p_err.reason.meta.alloc_type;
                 printf("Error: Parser could not allocate room for variable args,"
                     " allocation type %d.\n", meta);
             }
@@ -155,7 +155,7 @@ void cis_perror(dumpcis_error_t err)
                     " parse_body()!\n", err_subtype);
             }
         }
-        else if(err.reason.parse.err == BAD_TUPLE_ALLOC)
+        else if(p_err.err == BAD_TUPLE_ALLOC)
         {
             /* TODO: Last allocated tuple as union data? */
             printf("Error: DUMPCIS could not allocate tuple list.\n");
