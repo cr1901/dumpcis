@@ -19,19 +19,38 @@ int cis_parse(cis_parser_t * state, uint8_t __far * start_addr)
     {
         uint8_t byte_count;
         uint16_t len;
+        int parse_rc;
 
         len = read_entry(buf, start_addr, true);
 
         curr_tuple.type = buf[0];
-        parse_body(state, &curr_tuple, &buf[2], buf[1]);
+        parse_rc = parse_body(state, &curr_tuple, &buf[2], buf[1]);
 
-        for(byte_count = 0; byte_count < len; byte_count++)
+        if(parse_rc)
         {
-            printf("%X ", buf[byte_count]);
+            return -1;
+        }
+        else
+        {
+            bool foreach_rc;
+
+            foreach_rc = state->foreach(curr_tuple, state->user);
+            if(!foreach_rc)
+            {
+                return -2;
+            }
         }
 
         start_addr += 2*len; /* TODO: Support 8-bit meaningfully. */
-        printf("next: %p\n", start_addr);
+
+        if(state->debug)
+        {
+            for(byte_count = 0; byte_count < len; byte_count++)
+            {
+                printf("%X ", buf[byte_count]);
+            }
+            printf("next: %p\n", start_addr);
+        }
     }
 
     return 0;
@@ -43,6 +62,8 @@ static bool inline is_end_tuple(cis_tuple_t tuple)
     return (type == CISTPL_NO_LINK || type == CISTPL_END);
 }
 
+/* The important logic is here- we have a tuple, figure out how the body
+   should be interpreted. */
 static int inline parse_body(cis_parser_t * state, cis_tuple_t * tuple, char body[], uint8_t len)
 {
     return 0;

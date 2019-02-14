@@ -198,11 +198,16 @@ typedef struct
 
 typedef struct
 {
+    /* Public interface. */
     /* No need to do a deep copy of each cis_tuple_t- alloc will ensure the
     memory used by each tuple's pointers won't go out of scope. */
+    /* Return true for success, false for "unable to complete task". */
     bool (* foreach)(cis_tuple_t curr, void * user);
     bool (* alloc)(void ** mem_ptr, size_t size, void * user);
+    bool debug; /* Print parser debugging info if true. */
     void * user;
+
+    /* Private interface follows. */
 } cis_parser_t;
 
 int cis_parse(cis_parser_t * state, uint8_t __far * start_addr);

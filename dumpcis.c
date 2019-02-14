@@ -8,6 +8,9 @@
 
 uint8_t __far * PCM_WIN = (uint8_t __far *) MK_FP(0xe000, 0000);
 
+bool foreach_tuple(cis_tuple_t curr, void * user);
+bool alloc_tuple(void ** mem_ptr, size_t size, void * user);
+
 int main()
 {
     pcm_handle_t pcmo, * pcm;
@@ -36,9 +39,14 @@ int main()
 
             cis_parser_t parser;
             uint8_t count = 0;
+            uint8_t isr;
 
+            parser.foreach = foreach_tuple;
+            parser.alloc = alloc_tuple;
+            parser.debug = true;
+            parser.user = NULL;
 
-            uint8_t isr = pcm_read(pcm, socket, 0x01);
+            isr = pcm_read(pcm, socket, 0x01);
             if((isr & 0xC))
             {
                 printf("Found a card in Socket %d.\n", socket);
@@ -81,4 +89,14 @@ int main()
     }
 
     return 0;
+}
+
+bool foreach_tuple(cis_tuple_t curr, void * user)
+{
+    return true;
+}
+
+bool alloc_tuple(void ** mem_ptr, size_t size, void * user)
+{
+    return false;
 }
