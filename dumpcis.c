@@ -8,6 +8,29 @@
 
 uint8_t __far * PCM_WIN = (uint8_t __far *) MK_FP(0xe000, 0000);
 
+/* No malloc- reserve a reasonable amount of space for all possible
+   allocations. We can't use a char * buf because we can't get alignment of
+   each struct in this compiler, among other things. */
+/* Used by foreach_tuple. */
+cis_tuple_t tuple[40];
+
+/* Used by alloc_tuple. */
+char string[2048];
+char * str_ptr[128];
+cis_mfc_addr_t mfc_addr[32];
+cis_device_info_t device_info[32];
+
+
+/* All point to next-free. */
+typedef struct
+{
+    uint8_t tuple;
+    uint8_t string;
+    uint16_t str_ptr;
+    uint8_t mfc_addr;
+    uint8_t device_info;
+} dumpcis_user_t;
+
 typedef struct
 {
     bool ok;
@@ -30,6 +53,7 @@ typedef struct
         print_error_t print;
     } reason;
 } dumpcis_error_t;
+
 
 void cis_perror(dumpcis_error_t err);
 bool foreach_tuple(cis_tuple_t curr, void * user);
@@ -64,13 +88,14 @@ int main()
 
             cis_parser_t parser;
             cis_parser_error_t parser_rc;
+            dumpcis_user_t user = { 0, 0, 0, 0, 0 };
             uint8_t count = 0;
             uint8_t isr;
 
             parser.foreach = foreach_tuple;
             parser.alloc = alloc_tuple;
             parser.debug = true;
-            parser.user = NULL;
+            parser.user = &user;
 
             isr = pcm_read(pcm, socket, 0x01);
             if((isr & 0xC))
@@ -102,6 +127,7 @@ int main()
             /* Enable attribute memory and read CIS. */
             pcm_write(pcm, socket, 0x06, 0x01);
 
+            /* For loop to handle longlink goes here. */
             parser_rc = cis_parse(&parser, PCM_WIN);
             if(parser_rc.err != PARSER_OK)
             {
@@ -181,8 +207,16 @@ void cis_perror(dumpcis_error_t err)
     }
 }
 
+/* Callbacks */
 bool foreach_tuple(cis_tuple_t curr, void * user)
 {
+    dumpcis_user_t * ptrs = user;
+    if((ptrs->tuple) < (sizeof(tuple)/sizeof(cis_tuple_t)))
+    {
+        tuple[ptrs->tuple++] = curr;
+        return true;
+    }
+
     return false;
 }
 
