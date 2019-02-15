@@ -25,8 +25,8 @@ cis_device_info_t device_info[32];
 typedef struct
 {
     uint8_t tuple;
-    uint8_t string;
-    uint16_t str_ptr;
+    uint16_t string;
+    uint8_t str_ptr;
     uint8_t mfc_addr;
     uint8_t device_info;
 } dumpcis_user_t;

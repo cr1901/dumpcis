@@ -49,6 +49,7 @@ cis_parser_error_t cis_parse(cis_parser_t * state, uint8_t __far * start_addr)
 
         if(state->debug)
         {
+            printf("Debug: ");
             for(byte_count = 0; byte_count < len; byte_count++)
             {
                 printf("%X ", buf[byte_count]);
