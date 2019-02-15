@@ -107,7 +107,6 @@ int main()
             {
                 app_rc.err = PARSE_ERROR;
                 app_rc.reason.parse = parser_rc;
-                goto check_err;
             }
 
             pcm_write(pcm, socket, 0x06, 0);
@@ -117,6 +116,11 @@ int main()
 
             pcm_write(pcm, socket, 0x06, prev_adrwin);
             pcm_write(pcm, socket, 0x02, prev_power);
+
+            if(app_rc.err != NO_ERROR)
+            {
+                goto check_err;
+            }
         }
     }
 
