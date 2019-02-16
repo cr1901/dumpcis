@@ -203,7 +203,7 @@ typedef struct
     memory used by each tuple's pointers won't go out of scope. */
     /* Return true for success, false for "unable to complete task". */
     bool (* foreach)(cis_tuple_t curr, void * user);
-    bool (* alloc)(void ** mem_ptr, size_t size, void * user);
+    bool (* alloc)(void ** mem_ptr, cis_alloc_req_t type, size_t size, void * user);
     bool debug; /* Print parser debugging info if true. */
     void * user;
 

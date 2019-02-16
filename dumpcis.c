@@ -58,7 +58,7 @@ typedef struct
 void cis_perror(dumpcis_error_t err);
 print_error_t cis_print();
 bool foreach_tuple(cis_tuple_t curr, void * user);
-bool alloc_tuple(void ** mem_ptr, size_t size, void * user);
+bool alloc_tuple(void ** mem_ptr, cis_alloc_req_t type, size_t size, void * user);
 
 int main()
 {
@@ -242,7 +242,40 @@ bool foreach_tuple(cis_tuple_t curr, void * user)
     return false;
 }
 
-bool alloc_tuple(void ** mem_ptr, size_t size, void * user)
+bool alloc_tuple(void ** mem_ptr, cis_alloc_req_t type, size_t size, void * user)
 {
+    dumpcis_user_t * ptrs = user;
+    bool alloc_rc = false;
+
+    /* I hope I'm forgiven one day for this... */
+    #define BOUNDED_ALLOC_AND_RETURN(_array, _offset, _type) do { \
+        if((_offset + size) < (sizeof(_array)/sizeof(_type)))     \
+        {                                                         \
+            *mem_ptr = &_array[_offset];                          \
+            _offset += size;                                      \
+            return true;                                          \
+        }                                                         \
+        else                                                      \
+        {                                                         \
+            return false;                                         \
+        }                                                         \
+    } while(false)
+
+
+    switch(type)
+    {
+        case ALLOC_CHAR_STR:
+            BOUNDED_ALLOC_AND_RETURN(string, ptrs->string, char);
+        case ALLOC_CHAR_PTR:
+            BOUNDED_ALLOC_AND_RETURN(str_ptr, ptrs->str_ptr, char *);
+        case ALLOC_MFC_ADDR:
+            BOUNDED_ALLOC_AND_RETURN(mfc_addr, ptrs->mfc_addr, cis_mfc_addr_t);
+        case ALLOC_DEV_INFO:
+            BOUNDED_ALLOC_AND_RETURN(device_info, ptrs->device_info, cis_device_info_t);
+        default:
+            return false;
+    }
+
+    /* Unreachable. */
     return false;
 }
