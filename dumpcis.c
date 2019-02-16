@@ -56,6 +56,7 @@ typedef struct
 
 
 void cis_perror(dumpcis_error_t err);
+print_error_t cis_print();
 bool foreach_tuple(cis_tuple_t curr, void * user);
 bool alloc_tuple(void ** mem_ptr, size_t size, void * user);
 
@@ -88,6 +89,7 @@ int main()
 
             cis_parser_t parser;
             cis_parser_error_t parser_rc;
+            print_error_t print_rc;
             dumpcis_user_t user = { 0, 0, 0, 0, 0 };
             uint8_t count = 0;
             uint8_t isr;
@@ -135,6 +137,20 @@ int main()
                 app_rc.reason.parse = parser_rc;
             }
 
+            /* After all tuples are parsed, print some information about
+               the found card. */
+            if(app_rc.err == NO_ERROR)
+            {
+                print_rc = cis_print();
+
+                if(!print_rc.ok)
+                {
+                    app_rc.err = PRINT_ERROR;
+                    app_rc.reason.print = print_rc;
+                }
+            }
+
+            /* Disable all windows. */
             pcm_write(pcm, socket, 0x06, 0);
 
             /* Restore modified registers. */
@@ -205,6 +221,12 @@ void cis_perror(dumpcis_error_t err)
         printf("Internal Error: Unknown application error type %d!\n",
             err.err);
     }
+}
+
+print_error_t cis_print()
+{
+    print_error_t rc = { false, 0, 0 };
+    return rc;
 }
 
 /* Callbacks */
